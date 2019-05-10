@@ -1,26 +1,29 @@
 <template>
   <div class="container-fluid">
     <div class="search-wrapper">
-			<!-- the search bar form -->
-      <form v-on:submit="getfilteredData">
         <div class="form-row">
-          <div class="col-10">
-            <input type="text" class="form-control" placeholder="Enter key word  ..." v-model="search.word" v-on:keyup="getfilteredData">
+          <!-- input of type -->
+          <div class="col-3">
+            <select v-model="search.type" v-on:change="getfilteredData">
+              <option value="">全部類別</option>    
+              <option v-for="(item, index) in typesWholeList" :key="index">{{ item }}</option>
+            </select>
           </div>
+          <!-- input of tags -->
+			    <div id="checkboxes">
+			    	<div v-for="(stack,index) in tagWholeList" :key="index" class="form-check form-check-inline">
+				    	<input class="form-check-input" type="checkbox"  v-model="stack.checked" v-on:change="getfilteredData">
+				    	<label class="form-check-label">
+						    {{ stack.value }}
+				    	</label>
+			    	</div>
+	    		</div>
+          <!-- input of word -->
+					<input-searchbar v-model="search.word" v-on:input="getfilteredData"></input-searchbar> 
           <div class="col-2">
             <button type="submit" class="btn btn-primary"><i class="fa fa-search"></i></button>
           </div>
         </div>
-      </form>
-			<!-- checkboxes -->
-			<div id="checkboxes">
-				<div v-for="(stack,index) in tagWholeList" :key="index" class="form-check form-check-inline">
-					<input class="form-check-input" type="checkbox"  v-model="stack.checked" v-on:change="getfilteredData">
-					<label class="form-check-label">
-						{{ stack.value }}
-					</label>
-				</div>
-			</div>
 		</div>
 
     <div class="card-columns">
@@ -32,12 +35,14 @@
 
 <script>
 import ItemCard from './ItemCard';
+import InputSearchBar from './InputSearchBar';
 import data from '../data/data';
 
 export default {
 	name: 'SearchPage',
 	components: {
-		'item-card': ItemCard
+		'item-card': ItemCard,
+		'input-searchbar': InputSearchBar,
 	},
 	computed: {
 		selectedTags: function() {
@@ -52,11 +57,13 @@ export default {
 	data() {
 		return {
 			filteredData: [],
+			 message: 'hello',
       search: {
         word:'',
         type:'',
         tags:''
-        },
+				},
+			typesWholeList: [ "food_share","free_shop"], //所有的類別各項
       tagWholeList: [
       {
         checked: false,
@@ -80,14 +87,21 @@ export default {
 	methods: {
 		getfilteredData: function() {
 			this.filteredData = data;
+			let filteredDataByType = [];
 			let filteredDataByTags = [];
-			let filteredDataByWord = [];
-			// first check if tags where selected
+      let filteredDataByWord = [];
+      var selectedType = this.search.type;
+       // filter by type
+      if (selectedType !== '') {
+				filteredDataByType = this.filteredData.filter(obj => obj.type === selectedType);
+				this.filteredData = filteredDataByType;
+			}
+			// filter by tags
 			if (this.selectedTags.length > 0) {
 				filteredDataByTags= this.filteredData.filter(obj => this.selectedTags.every(val => obj.stack.indexOf(val) >= 0));
 				this.filteredData = filteredDataByTags;
 			}
-			// then filter according to keyword, for now this only affects the name attribute of each data
+			// filter by keyword, for now this only affects the name attribute of each data
 			if (this.search.word !== '') {
 				filteredDataByWord = this.filteredData.filter(obj => obj.name.indexOf(this.search.word.toLowerCase()) !== -1);
 				this.filteredData = filteredDataByWord;
